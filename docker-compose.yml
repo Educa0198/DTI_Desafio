@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # 1. THE DATABASE CONTAINER
+  db:
+    image: postgres:16-alpine
+    container_name: escola_db_container
+    environment:
+      POSTGRES_USER: dti
+      POSTGRES_PASSWORD: DTI
+      POSTGRES_DB: escola_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+
+  # 2. THE JAVA BACKEND CONTAINER
+  backend:
+    build: ./backend
+    container_name: escola_backend_container
+    ports:
+      - "8080:8080"
+    environment:
+      # These variables OVERRIDE your application.properties!
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/escola_db
+      - SPRING_DATASOURCE_USERNAME=dti
+      - SPRING_DATASOURCE_PASSWORD=DTI
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - db # Tells Docker to start the database before starting Java
+
+  # 3. THE REACT FRONTEND CONTAINER
+  frontend:
+    build: ./frontend
+    container_name: escola_frontend_container
+    ports:
+      - "3000:80" # Maps port 3000 on your computer to Nginx's port 80
+    depends_on:
+      - backend # Tells Docker to start Java before starting React
+
+# This creates a persistent hard drive for the database
+volumes:
+  postgres_data:
